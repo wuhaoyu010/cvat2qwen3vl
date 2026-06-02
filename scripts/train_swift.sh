@@ -75,10 +75,11 @@ TRAIN_CMD=(
     --lora_rank "${LORA_RANK}"
     --lora_alpha "${LORA_ALPHA}"
     --lora_dropout "${LORA_DROPOUT}"
-    --target_modules ALL
+    --target_modules all-linear
 
     # 冻结视觉编码器 (Qwen3-VL训练时必须冻结ViT, 避免灾难性遗忘)
     --freeze_vit true
+    --freeze_aligner true
 
     # 数据处理
     --packing true
@@ -100,10 +101,11 @@ TRAIN_CMD=(
     --logging_steps "${LOG_STEPS}"
     --save_steps "${SAVE_STEPS}"
     --save_total_limit 3
+    --eval_steps "${SAVE_STEPS}"
 
     # 混合精度
     --torch_dtype bfloat16
-    --attn_implementation flash_attention_2
+    --attn_impl flash_attn
 )
 
 # 验证集

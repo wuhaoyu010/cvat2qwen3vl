@@ -4,12 +4,19 @@ Pillow>=9.0
 pyyaml>=6.0
 scikit-learn>=1.0
 
+# Web 服务
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+python-multipart>=0.0.6
+websockets>=11.0
+
 # ms-swift (训练用)
-# ms-swift>=4.0
-# transformers>=4.57
-# qwen_vl_utils>=0.0.14
+ms-swift>=4.0
+transformers>=4.57
+qwen_vl_utils>=0.0.14
 
 # Unsloth (训练用)
-# unsloth
-# trl>=0.22.0
-# peft>=0.7.0
+unsloth
+trl>=0.22.0
+peft>=0.7.0
+datasets>=2.0

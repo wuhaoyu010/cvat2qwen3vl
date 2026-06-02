@@ -8,12 +8,13 @@ import json
 import shutil
 import subprocess
 import sys
+import shutil as _shutil
 from pathlib import Path
 from typing import List, Optional
 
 import yaml
 from fastapi import APIRouter, HTTPException, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -25,6 +26,7 @@ router = APIRouter(prefix="/api")
 PROJECT_ROOT = Path(__file__).parent.parent
 UPLOAD_DIR = PROJECT_ROOT / "uploads"
 OUTPUT_DIR = PROJECT_ROOT / "output"
+TRAINING_LOG = PROJECT_ROOT / "training.log"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 # 模型路径历史文件 (用户家目录下)
@@ -189,6 +191,24 @@ async def list_output_files():
 
 # ======================== 训练启动 ========================
 
+def _check_swift_available() -> bool:
+    """检查 swift 命令是否可用"""
+    return _shutil.which("swift") is not None
+
+
+@router.get("/training-log")
+async def get_training_log(lines: int = 200):
+    """读取训练日志 (最后 N 行)"""
+    if not TRAINING_LOG.exists():
+        return {"log": "", "exists": False}
+    try:
+        content = TRAINING_LOG.read_text(encoding="utf-8", errors="replace")
+        all_lines = content.splitlines()
+        return {"log": "\n".join(all_lines[-lines:]), "exists": True, "total_lines": len(all_lines)}
+    except Exception as e:
+        return {"log": f"Error reading log: {e}", "exists": False}
+
+
 @router.post("/launch-training")
 async def launch_training(params: dict):
     """
@@ -201,6 +221,16 @@ async def launch_training(params: dict):
     lr = params.get("lr", 1e-4)
     lora_rank = params.get("lora_rank", 16)
     model_family = params.get("model_family") or ""
+
+    # ms-swift 可用性检查
+    if framework == "swift" and not _check_swift_available():
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "ms-swift 未安装。请先执行: pip install ms-swift\n"
+                "或在服务器上运行: pip install 'ms-swift[all]'"
+            ),
+        )
 
     # 记录到历史
     try:
@@ -240,11 +270,15 @@ async def launch_training(params: dict):
             "--output_dir", str(OUTPUT_DIR / framework / "checkpoints"),
             "--tuner_type", "lora",
             "--lora_rank", str(lora_rank),
+            "--target_modules", "all-linear",
             "--freeze_vit", "true",
+            "--freeze_aligner", "true",
             "--packing", "true",
             "--num_train_epochs", str(epochs),
             "--per_device_train_batch_size", str(batch_size),
             "--learning_rate", str(lr),
+            "--torch_dtype", "bfloat16",
+            "--attn_impl", "flash_attn",
             "--logging_steps", "10",
         ]
     else:
@@ -256,13 +290,13 @@ async def launch_training(params: dict):
         ]
 
     try:
+        # 输出重定向到日志文件
+        log_fh = open(TRAINING_LOG, "w", encoding="utf-8")
         process = subprocess.Popen(
             cmd,
-            stdout=subprocess.PIPE,
+            stdout=log_fh,
             stderr=subprocess.STDOUT,
             text=True,
-            encoding="utf-8",
-            errors="replace",
             cwd=str(PROJECT_ROOT),
         )
         return {
@@ -271,6 +305,7 @@ async def launch_training(params: dict):
             "command": " ".join(cmd),
             "train_file": str(train_file),
             "model_path": model_path,
+            "log_file": str(TRAINING_LOG),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"启动训练失败: {e}")

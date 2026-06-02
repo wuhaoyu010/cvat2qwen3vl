@@ -20,6 +20,7 @@ Qwen3-VL-8B-Instruct + LoRA微调 (4bit量化, 极速训练)
 import os
 import sys
 import json
+import argparse
 from pathlib import Path
 
 # ============ 可修改参数 ============
@@ -35,6 +36,35 @@ TRAIN_DATA = os.environ.get(
 VAL_DATA = os.environ.get(
     "UNSLOTH_VAL_DATA", "./output/unsloth/val.json"
 )
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Unsloth Qwen-VL LoRA training")
+    parser.add_argument("--model_name", type=str, default=None,
+                        help="Model path or HuggingFace ID")
+    parser.add_argument("--train_file", type=str, default=None,
+                        help="Training data JSON path")
+    parser.add_argument("--val_file", type=str, default=None,
+                        help="Validation data JSON path")
+    parser.add_argument("--output_dir", type=str, default=None,
+                        help="Output directory")
+    parser.add_argument("--num_epochs", type=int, default=None)
+    parser.add_argument("--batch_size", type=int, default=None)
+    parser.add_argument("--lr", type=float, default=None)
+    parser.add_argument("--lora_rank", type=int, default=None)
+    parser.add_argument("--max_seq_len", type=int, default=None)
+    args = parser.parse_args()
+    # CLI args override env vars / defaults
+    global MODEL_PATH, TRAIN_DATA, VAL_DATA, OUTPUT_DIR
+    if args.model_name:
+        MODEL_PATH = args.model_name
+    if args.train_file:
+        TRAIN_DATA = args.train_file
+    if args.val_file:
+        VAL_DATA = args.val_file
+    if args.output_dir:
+        OUTPUT_DIR = args.output_dir
+    return args
 
 # 训练超参
 NUM_EPOCHS = 3
@@ -140,6 +170,8 @@ def format_data_for_unsloth(data):
 
 def main():
     """主训练流程"""
+    parse_args()
+    
     print("=" * 60)
     print("  Unsloth Qwen3-VL LoRA 训练")
     print("=" * 60)
@@ -172,7 +204,7 @@ def main():
     
     model = FastVisionModel.get_peft_model(
         model,
-        finetune_vision_layers=False,      # 冻结视觉编码器
+        finetune_vision_layers=False,      # 冻结视觉编码器 (Qwen3-VL推荐)
         finetune_language_layers=True,      # 微调语言模型
         finetune_attention_modules=True,    # 微调注意力层
         finetune_mlp_modules=True,          # 微调MLP层
@@ -181,6 +213,8 @@ def main():
         lora_dropout=LORA_DROPOUT,
         bias="none",
         random_state=3407,
+        use_rslora=False,
+        loftq_config=None,
     )
     
     # ==================== 3. 加载数据 ====================
@@ -199,6 +233,8 @@ def main():
     
     # ==================== 4. 训练 ====================
     print("\n[4/4] 开始训练...")
+    
+    FastVisionModel.for_training(model)
     
     output_path = Path(OUTPUT_DIR)
     output_path.mkdir(parents=True, exist_ok=True)
