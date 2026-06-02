@@ -69,7 +69,7 @@ uv pip install fastapi uvicorn[standard] python-multipart websockets
 :: Install frontend deps
 echo [3/3] Installing frontend dependencies...
 cd /d "%PROJECT_DIR%web"
-pnpm install --network-timeout 300000 --fetch-timeout 120000
+pnpm install  --fetch-timeout 120000
 
 echo.
 echo ============================================

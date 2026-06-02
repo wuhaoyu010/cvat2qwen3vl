@@ -45,7 +45,7 @@ if [ ! -f "$PROJECT_DIR/web/dist/index.html" ]; then
     pnpm config set registry https://registry.npmmirror.com 2>/dev/null || true
     export npm_config_registry=https://registry.npmmirror.com
     cd "$PROJECT_DIR/web"
-    pnpm build --network-timeout 300000
+    pnpm build 
     echo ""
 else
     echo -e "${YELLOW}[提示] 前端已构建，跳过 (如需重新构建请删除 web/dist)${NC}"

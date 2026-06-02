@@ -32,7 +32,7 @@ set "npm_config_registry=https://registry.npmmirror.com"
 if not exist "%PROJECT_DIR%web\dist\index.html" (
     echo [1/2] Building frontend...
     cd /d "%PROJECT_DIR%web"
-    pnpm build --network-timeout 300000
+    pnpm build 
     if errorlevel 1 (
         echo [ERROR] Frontend build failed
         pause

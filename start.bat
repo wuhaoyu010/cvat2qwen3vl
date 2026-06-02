@@ -26,7 +26,7 @@ set "npm_config_registry=https://registry.npmmirror.com"
 if not exist "%PROJECT_DIR%web\node_modules" (
     echo [INFO] Installing frontend dependencies...
     cd /d "%PROJECT_DIR%web"
-    pnpm install --network-timeout 300000 --fetch-timeout 120000
+    pnpm install  --fetch-timeout 120000
     if errorlevel 1 (
         echo [ERROR] Frontend install failed
         pause

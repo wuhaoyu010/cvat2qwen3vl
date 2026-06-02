@@ -67,7 +67,7 @@ pip install fastapi "uvicorn[standard]" python-multipart websockets
 # 安装前端依赖
 echo -e "${GREEN}[3/3] 安装前端依赖...${NC}"
 cd "$PROJECT_DIR/web"
-pnpm install --network-timeout 300000 --fetch-timeout 120000
+pnpm install  --fetch-timeout 120000
 
 echo ""
 echo -e "${CYAN}============================================"

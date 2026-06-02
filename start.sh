@@ -46,7 +46,7 @@ export npm_config_registry=https://registry.npmmirror.com
 if [ ! -d "$PROJECT_DIR/web/node_modules" ]; then
     echo -e "${YELLOW}[提示] 正在安装前端依赖...${NC}"
     cd "$PROJECT_DIR/web"
-    pnpm install --network-timeout 300000 --fetch-timeout 120000
+    pnpm install  --fetch-timeout 120000
 fi
 
 # 激活虚拟环境
