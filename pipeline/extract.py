@@ -155,7 +155,7 @@ class DatasetExtractor:
         
         # 如果没有images目录, 查找包含图片文件的目录
         if images_dir is None:
-            for d in [extract_dir] + list(extract_dir.rglobs("*")):
+            for d in [extract_dir] + list(extract_dir.rglob("*")):
                 if d.is_dir():
                     img_files = [f for f in d.iterdir()
                                  if f.is_file() and f.suffix.lower() in self.SUPPORTED_IMAGE_EXTS]
