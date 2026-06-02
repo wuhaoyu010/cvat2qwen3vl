@@ -2,7 +2,7 @@
 title cvat2qwen3vl - Dev Mode
 
 set "PROJECT_DIR=%~dp0"
-set "BACKEND_PORT=8001"
+set "PREFERRED_PORT=8001"
 set "FRONTEND_PORT=5173"
 
 echo ============================================
@@ -26,7 +26,7 @@ set "npm_config_registry=https://registry.npmmirror.com"
 if not exist "%PROJECT_DIR%web\node_modules" (
     echo [INFO] Installing frontend dependencies...
     cd /d "%PROJECT_DIR%web"
-    pnpm install  --fetch-timeout 120000
+    pnpm install --fetch-timeout 120000
     if errorlevel 1 (
         echo [ERROR] Frontend install failed
         pause
@@ -42,23 +42,43 @@ if exist "C:\Users\wuhao\.local\bin\uv.exe" (
     set "PATH=C:\Users\wuhao\.local\bin;%PATH%"
 )
 
-echo [1/2] Starting backend (port %BACKEND_PORT%)...
+:: Clean old port file
+del "%PROJECT_DIR%.backend_port" 2>nul
+
+echo [1/2] Starting backend (auto-detect port)...
 echo [2/2] Starting frontend (port %FRONTEND_PORT%)...
 echo.
+
+:: Start backend in new window
+start "cvat2qwen3vl-backend" cmd /k "cd /d %PROJECT_DIR% && title Backend && call .venv\Scripts\activate.bat && python -m server.main %PREFERRED_PORT%"
+
+:: Wait for .backend_port file
+set WAIT=0
+:wait_loop
+if exist "%PROJECT_DIR%.backend_port" goto port_ready
+if %WAIT% GEQ 50 goto port_timeout
+timeout /t 1 /nobreak >nul
+set /a WAIT+=1
+goto wait_loop
+
+:port_timeout
+echo [ERROR] Backend startup timeout
+taskkill /fi "WINDOWTITLE eq Backend" /f >nul 2>&1
+pause
+exit /b 1
+
+:port_ready
+set /p BACKEND_PORT=<"%PROJECT_DIR%.backend_port"
+
 echo   Backend:  http://localhost:%BACKEND_PORT%
 echo   Frontend: http://localhost:%FRONTEND_PORT%
 echo   Press Ctrl+C to stop all services
 echo ------------------------------------------------
-
-:: Start backend in new window
-start "cvat2qwen3vl-backend" cmd /k "cd /d %PROJECT_DIR% && title Backend-FastAPI-%BACKEND_PORT% && call .venv\Scripts\activate.bat && uvicorn server.main:app --reload --port %BACKEND_PORT%"
-
-:: Wait for backend to start
-timeout /t 2 /nobreak >nul
 
 :: Start frontend in current window
 cd /d "%PROJECT_DIR%web"
 pnpm dev
 
 :: Kill backend when frontend exits
-taskkill /fi "WINDOWTITLE eq Backend-FastAPI-%BACKEND_PORT%" /f >nul 2>&1
+taskkill /fi "WINDOWTITLE eq Backend" /f >nul 2>&1
+del "%PROJECT_DIR%.backend_port" 2>nul

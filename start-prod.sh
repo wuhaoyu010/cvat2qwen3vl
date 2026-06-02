@@ -7,7 +7,7 @@
 set -e
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PORT=8001
+PREFERRED_PORT=8001
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -20,6 +20,7 @@ cleanup() {
     echo -e "${YELLOW}正在停止服务...${NC}"
     kill $SERVER_PID 2>/dev/null || true
     wait $SERVER_PID 2>/dev/null || true
+    rm -f "$PROJECT_DIR/.backend_port"
     echo -e "${GREEN}已停止服务${NC}"
     exit 0
 }
@@ -45,22 +46,41 @@ if [ ! -f "$PROJECT_DIR/web/dist/index.html" ]; then
     pnpm config set registry https://registry.npmmirror.com 2>/dev/null || true
     export npm_config_registry=https://registry.npmmirror.com
     cd "$PROJECT_DIR/web"
-    pnpm build 
+    pnpm build --network-timeout 300000 --fetch-timeout 120000
     echo ""
 else
     echo -e "${YELLOW}[提示] 前端已构建，跳过 (如需重新构建请删除 web/dist)${NC}"
     echo ""
 fi
 
-echo -e "${GREEN}[2/2] 启动服务...${NC}"
+# 清理旧的端口文件
+rm -f "$PROJECT_DIR/.backend_port"
+
+echo -e "${GREEN}[2/2] 启动服务 (自动检测端口)...${NC}"
+
+cd "$PROJECT_DIR"
+python -m server.main $PREFERRED_PORT &
+SERVER_PID=$!
+
+# 等待 .backend_port 文件出现
+WAIT=0
+while [ ! -f "$PROJECT_DIR/.backend_port" ] && [ $WAIT -lt 10 ]; do
+    sleep 0.2
+    WAIT=$((WAIT + 1))
+done
+
+if [ ! -f "$PROJECT_DIR/.backend_port" ]; then
+    echo -e "${RED}[错误] 服务启动超时${NC}"
+    cleanup
+    exit 1
+fi
+
+PORT=$(cat "$PROJECT_DIR/.backend_port")
+
 echo ""
 echo -e "  访问:       ${CYAN}http://localhost:$PORT${NC}"
 echo -e "  API 文档:   ${CYAN}http://localhost:$PORT/docs${NC}"
 echo -e "  按 ${YELLOW}Ctrl+C${NC} 停止"
 echo -e "────────────────────────────────────────────"
-
-cd "$PROJECT_DIR"
-uvicorn server.main:app --host 0.0.0.0 --port $PORT &
-SERVER_PID=$!
 
 wait $SERVER_PID

@@ -21,9 +21,10 @@ from .ws import handle_pipeline_ws
 app = FastAPI(title="cvat2qwen3vl", version="1.0.0")
 
 # CORS (开发模式: Vite dev server 在 5173 端口)
+import re
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[re.compile(r"^http://localhost:\d+$"), re.compile(r"^http://127\.0\.0\.1:\d+$")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

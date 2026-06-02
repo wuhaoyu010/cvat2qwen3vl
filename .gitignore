@@ -36,6 +36,7 @@ uploads/
 # Temp
 *.tmp
 *.log
+.backend_port
 
 # Uploads (user data)
 uploads/
