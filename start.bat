@@ -77,7 +77,7 @@ echo ------------------------------------------------
 
 :: Start frontend in current window
 cd /d "%PROJECT_DIR%web"
-pnpm dev
+pnpm dev --host
 
 :: Kill backend when frontend exits
 taskkill /fi "WINDOWTITLE eq Backend" /f >nul 2>&1
