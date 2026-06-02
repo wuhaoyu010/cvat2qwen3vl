@@ -1,0 +1,45 @@
+# ==========================================
+# cvat2qwen3vl 配置文件
+# ==========================================
+
+# 输入: 多个ZIP文件或已解压的目录路径
+input_paths:
+  - "../autoedge@4260.zip"
+  - "../autoedge@3775.zip"
+
+# 输出目录
+output_dir: "./output"
+
+# 数据划分
+split_ratio:
+  train: 0.9
+  val: 0.1
+  seed: 42
+  stratify_by_label: false  # 是否按类别分层抽样
+
+# QA任务配置
+tasks:
+  grounding: true           # Task 1: 定位+描述
+  verification: true        # Task 2: 框内物体判断
+  neg_sample_ratio: 0.3     # 负例样本占比
+
+# 输出框架格式
+frameworks:
+  - swift                   # 输出ms-swift JSONL格式 (bbox自动归一化)
+  - unsloth                 # 输出Unsloth JSON格式 (bbox需手动归一化)
+
+# 图片处理
+image:
+  supported_formats:
+    - ".jpg"
+    - ".jpeg"
+    - ".png"
+    - ".bmp"
+    - ".tiff"
+    - ".tif"
+    - ".webp"
+
+# 数据验证
+validation:
+  fix_bbox_clipping: true   # 自动修正超出范围的bbox
+  skip_empty_annotations: false  # 跳过无标注的图片

@@ -1,0 +1,21 @@
+[project]
+name = "cvat2qwen3vl"
+version = "1.0.0"
+description = "CVAT标注转Qwen3-VL微调数据"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "python-multipart>=0.0.6",
+    "pyyaml>=6.0",
+    "Pillow>=9.0",
+    "scikit-learn>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx",
+]
+
+[tool.setuptools]
+packages = ["server", "parsers", "converters", "pipeline", "utils"]
