@@ -24,11 +24,15 @@ if exist "C:\Users\wuhao\.local\bin\uv.exe" (
     set "PATH=C:\Users\wuhao\.local\bin;%PATH%"
 )
 
+:: Configure pnpm Alibaba mirror
+pnpm config set registry https://registry.npmmirror.com 2>nul
+set "npm_config_registry=https://registry.npmmirror.com"
+
 :: Build frontend if dist missing
 if not exist "%PROJECT_DIR%web\dist\index.html" (
     echo [1/2] Building frontend...
     cd /d "%PROJECT_DIR%web"
-    pnpm build
+    pnpm build --network-timeout 300000
     if errorlevel 1 (
         echo [ERROR] Frontend build failed
         pause

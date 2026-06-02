@@ -38,11 +38,15 @@ if [ ! -f "$PROJECT_DIR/.venv/bin/activate" ]; then
     exit 1
 fi
 
+# 配置 pnpm 阿里镜像源
+pnpm config set registry https://registry.npmmirror.com 2>/dev/null || true
+export npm_config_registry=https://registry.npmmirror.com
+
 # 检查 node_modules
 if [ ! -d "$PROJECT_DIR/web/node_modules" ]; then
     echo -e "${YELLOW}[提示] 正在安装前端依赖...${NC}"
     cd "$PROJECT_DIR/web"
-    pnpm install
+    pnpm install --network-timeout 300000 --fetch-timeout 120000
 fi
 
 # 激活虚拟环境

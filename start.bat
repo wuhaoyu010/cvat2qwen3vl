@@ -18,11 +18,15 @@ if not exist "%PROJECT_DIR%.venv\Scripts\activate.bat" (
     exit /b 1
 )
 
+:: Configure pnpm Alibaba mirror
+pnpm config set registry https://registry.npmmirror.com 2>nul
+set "npm_config_registry=https://registry.npmmirror.com"
+
 :: Check node_modules
 if not exist "%PROJECT_DIR%web\node_modules" (
     echo [INFO] Installing frontend dependencies...
     cd /d "%PROJECT_DIR%web"
-    pnpm install
+    pnpm install --network-timeout 300000 --fetch-timeout 120000
     if errorlevel 1 (
         echo [ERROR] Frontend install failed
         pause

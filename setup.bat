@@ -30,8 +30,13 @@ if errorlevel 1 (
 pnpm --version >nul 2>&1
 if errorlevel 1 (
     echo [INFO] Installing pnpm...
-    npm install -g pnpm
+    npm install -g pnpm --registry https://registry.npmmirror.com
 )
+
+:: Configure pnpm Alibaba mirror
+echo [INFO] Configuring pnpm mirror...
+pnpm config set registry https://registry.npmmirror.com 2>nul
+set "npm_config_registry=https://registry.npmmirror.com"
 
 :: Check uv
 set "UV_PATH=C:\Users\wuhao\.local\bin\uv.exe"
@@ -64,7 +69,7 @@ uv pip install fastapi uvicorn[standard] python-multipart websockets
 :: Install frontend deps
 echo [3/3] Installing frontend dependencies...
 cd /d "%PROJECT_DIR%web"
-pnpm install
+pnpm install --network-timeout 300000 --fetch-timeout 120000
 
 echo.
 echo ============================================

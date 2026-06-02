@@ -37,8 +37,16 @@ fi
 # 检查 pnpm
 if ! command -v pnpm &>/dev/null; then
     echo -e "${YELLOW}[提示] 正在安装 pnpm...${NC}"
-    npm install -g pnpm
+    npm install -g pnpm --registry https://registry.npmmirror.com
 fi
+
+# 配置 pnpm 阿里镜像源 + 超时
+echo -e "${YELLOW}[提示] 配置 pnpm 阿里镜像源...${NC}"
+pnpm config set registry https://registry.npmmirror.com 2>/dev/null || true
+export npm_config_registry=https://registry.npmmirror.com
+export npm_config_fetch_timeout=120000
+export npm_config_fetch_retry_mintimeout=60000
+export npm_config_fetch_retry_maxtimeout=300000
 
 # 创建虚拟环境
 if [ ! -d "$PROJECT_DIR/.venv" ]; then
@@ -59,7 +67,7 @@ pip install fastapi "uvicorn[standard]" python-multipart websockets
 # 安装前端依赖
 echo -e "${GREEN}[3/3] 安装前端依赖...${NC}"
 cd "$PROJECT_DIR/web"
-pnpm install
+pnpm install --network-timeout 300000 --fetch-timeout 120000
 
 echo ""
 echo -e "${CYAN}============================================"
